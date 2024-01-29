@@ -1,0 +1,19 @@
+version: '2'
+services:
+  container1:
+    image: container1
+    ports:
+      - "6000:6000"
+    volumes:
+      - assignment1_volume:/shared/
+
+  container2:
+    image: container2
+    ports:
+      - "8080:8080"
+    volumes:
+      - assignment1_volume:/shared/
+      
+volumes:
+    assignment1_volume:
+        external: true
