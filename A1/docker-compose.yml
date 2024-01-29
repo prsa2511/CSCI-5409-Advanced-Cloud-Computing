@@ -1,19 +1,29 @@
 version: '2'
 services:
   container1:
-    image: container1
+    image: pratiksakaria100/container1:latest
     ports:
       - "6000:6000"
     volumes:
       - assignment1_volume:/shared/
+    configs:
+      - source: my-config
+        target: /shared/file.dat
 
   container2:
-    image: container2
+    image: pratiksakaria100/container2:latest
     ports:
       - "8080:8080"
     volumes:
       - assignment1_volume:/shared/
+    configs:
+      - source: my-config
+        target: /shared/file.dat
       
 volumes:
     assignment1_volume:
+        external: true
+
+configs:
+    my-config:
         external: true
