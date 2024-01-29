@@ -6,24 +6,17 @@ services:
       - "6000:6000"
     volumes:
       - assignment1_volume:/shared/
-    configs:
-      - source: my-config
-        target: /shared/file.dat
-
+      - ./file.dat:/shared/file.dat
+    
   container2:
     image: pratiksakaria100/container2:latest
     ports:
       - "8080:8080"
     volumes:
       - assignment1_volume:/shared/
-    configs:
-      - source: my-config
-        target: /shared/file.dat
+      - ./file.dat:/shared/file.dat
       
 volumes:
     assignment1_volume:
-        external: true
-
-configs:
-    my-config:
-        external: true
+        external: false
+        name: assignment1_volume
