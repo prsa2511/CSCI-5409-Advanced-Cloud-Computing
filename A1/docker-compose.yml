@@ -6,7 +6,7 @@ services:
       - "6000:6000"
     volumes:
       - assignment1_volume:/shared/
-      - ./file.dat:/shared/file.dat
+      - ./:/shared/
     
   container2:
     image: pratiksakaria100/container2:latest
@@ -14,7 +14,7 @@ services:
       - "8080:8080"
     volumes:
       - assignment1_volume:/shared/
-      - ./file.dat:/shared/file.dat
+      - ./:/shared/
       
 volumes:
     assignment1_volume:
