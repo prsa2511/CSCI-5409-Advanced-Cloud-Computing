@@ -1,6 +1,8 @@
+version:'3'
+
 services:
   container1:
-    image: pratiksakaria100/container1:latest
+    image: pratiksakaria100/container1
     container_name : container1
     ports:
       - "6000:6000"
@@ -9,7 +11,7 @@ services:
       - ./:/shared/
     
   container2:
-    image: pratiksakaria100/container2:latest
+    image: pratiksakaria100/container2
     container_name : container2
     ports:
       - "8080:8080"
