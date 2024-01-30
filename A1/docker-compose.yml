@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 services:
   container1:
     image: pratiksakaria100/container1:latest
