@@ -2,6 +2,7 @@ version: '2'
 services:
   container1:
     image: pratiksakaria100/container1:latest
+    container_name : container1
     ports:
       - "6000:6000"
     volumes:
@@ -10,6 +11,7 @@ services:
     
   container2:
     image: pratiksakaria100/container2:latest
+    container_name : container2
     ports:
       - "8080:8080"
     volumes:
