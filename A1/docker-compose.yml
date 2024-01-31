@@ -14,7 +14,7 @@ services:
     image: pratiksakaria100/container2
     container_name : container2
     ports:
-      - "8080:8080"
+      - "9001:8080"
     volumes:
       - assignment1_volume:/shared/
       - ./:/shared/
