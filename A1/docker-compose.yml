@@ -6,7 +6,6 @@ services:
     ports:
       - "6000:6000"
     volumes:
-      - assignment1_volume:/shared/
       - ./:/shared/
     
   container2:
@@ -15,10 +14,4 @@ services:
     ports:
       - "9001:9001"
     volumes:
-      - assignment1_volume:/shared/
       - ./:/shared/
-      
-volumes:
-    assignment1_volume:
-        external: false
-        name: assignment1_volume
