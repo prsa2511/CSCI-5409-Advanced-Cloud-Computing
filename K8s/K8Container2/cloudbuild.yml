@@ -1,0 +1,37 @@
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "build",
+        "-t",
+        "us-east1-docker.pkg.dev/advanced-cloud/container2artifact/container2:latest",
+        ".",
+      ]
+
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "push",
+        "us-east1-docker.pkg.dev/advanced-cloud/container2artifact/container2:latest",
+      ]
+
+# Apply the disk.yaml to provision the PersistentVolume and PersistentVolumeClaim
+- name: "gcr.io/cloud-builders/kubectl"
+  args:
+    [
+      "apply",
+      "-f",
+      "disk.yaml"  # Path to disk.yaml file
+    ]
+
+# Deployment steps for container2
+- name: "gcr.io/cloud-builders/kubectl"
+  args:
+    [
+      "apply",
+      "-f",
+      "container2deployment.yaml"  # Path to deployment YAML file for container2
+    ]
+
+images:
+  - us-east1-docker.pkg.dev/advanced-cloud/container2artifact/container2:latest

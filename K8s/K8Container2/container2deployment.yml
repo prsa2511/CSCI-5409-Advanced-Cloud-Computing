@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: c2-deployement
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: container2
+  template:
+    metadata:
+      labels:
+        app: container2
+    spec:
+      containers:
+        - name: container2
+          image: us-east1-docker.pkg.dev/advanced-cloud/container2artifact/container2
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9001
+          volumeMounts:
+            - name: myvolume
+              mountPath: /pratik_PV_dir
+      volumes:
+        - name: myvolume
+          persistentVolumeClaim:
+            claimName: kubernetes-pv-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: c2-service
+spec:
+  selector:
+    app: container2
+  ports:
+    - protocol: TCP
+      port: 9001
+      targetPort: 9001
+  type: LoadBalancer
