@@ -12,19 +12,34 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.io.File;
 
 @RestController
 public class Container2Controller {
-
-    @PostMapping("/calculation_final")
+	//Testing Trigger for Recording2
+    @PostMapping ("/calculation_final")
     public MyResponse finalCalculation(@RequestBody MyRequest myRequest){
             MyResponse myResponse = new MyResponse();
             String file = myRequest.getfile();
             String product = myRequest.getProduct();
         System.out.println("In container 2, file and product are " + file + "& " + product);
             myResponse.setFile(file);
-        String filepath = "/shared/" + file;
-        //String filepath = "D:\\Documents\\Dalhousie University\\Fall 23-24\\CSCI 5409 -  Advanced Cloud Computing\\A1-Docker\\" + file;
+        String filepath = "/pratik_PV_dir/" + file;
+        //String filepath = "C:\\Program Files (x86)\\Google\\Cloud SDK\\Container1\\" + file;
+
+        // Check if filename is provided
+        if (myRequest.getfile() == null || myRequest.getfile().isEmpty()) {
+            myResponse.setFile(null);
+            myResponse.setError("Invalid JSON input.");
+            return myResponse;
+        }
+
+        // Check if the file exists
+        File fileObj = new File(filepath);
+        if (!fileObj.exists() || fileObj.isDirectory()) {
+            myResponse.setError("File not found.");
+            return myResponse;
+        }
 
         //Check if file corresponding to file is in CSV format
         try {
@@ -52,7 +67,7 @@ public class Container2Controller {
         try (BufferedReader reader = new BufferedReader(new FileReader(path.toFile()))) {
             // Read the header
             String header = reader.readLine();
-            if (header == null || !header.trim().equalsIgnoreCase("product,amount")) {
+            if (header == null || !header.trim().equalsIgnoreCase("product, amount")) {
                 return false; // Incorrect header
             }
 

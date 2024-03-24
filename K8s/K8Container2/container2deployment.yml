@@ -29,12 +29,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: c2-service
+  name: container2
 spec:
   selector:
     app: container2
   ports:
     - protocol: TCP
       port: 9001
-      targetPort: 9001
-  type: LoadBalancer

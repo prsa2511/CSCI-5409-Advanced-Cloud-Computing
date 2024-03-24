@@ -1,0 +1,4 @@
+com\example\container2\controller\Container2Controller.class
+com\example\container2\model\MyRequest.class
+com\example\container2\Container2Application.class
+com\example\container2\model\MyResponse.class

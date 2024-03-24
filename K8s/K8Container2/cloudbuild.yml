@@ -1,37 +1,27 @@
 steps:
   - name: "gcr.io/cloud-builders/docker"
     args:
-      [
-        "build",
-        "-t",
-        "us-east1-docker.pkg.dev/advanced-cloud/container2artifact/container2:latest",
-        ".",
-      ]
+      - "build"
+      - "-t"
+      - "us-east1-docker.pkg.dev/advanced-cloud/container2artifact/container2:latest"
+      - "."
 
   - name: "gcr.io/cloud-builders/docker"
     args:
-      [
-        "push",
-        "us-east1-docker.pkg.dev/advanced-cloud/container2artifact/container2:latest",
-      ]
-
-# Apply the disk.yaml to provision the PersistentVolume and PersistentVolumeClaim
-- name: "gcr.io/cloud-builders/kubectl"
-  args:
-    [
-      "apply",
-      "-f",
-      "disk.yaml"  # Path to disk.yaml file
-    ]
-
-# Deployment steps for container2
-- name: "gcr.io/cloud-builders/kubectl"
-  args:
-    [
-      "apply",
-      "-f",
-      "container2deployment.yaml"  # Path to deployment YAML file for container2
-    ]
+      - "push"
+      - "us-east1-docker.pkg.dev/advanced-cloud/container2artifact/container2:latest"
+      
+  - name: "gcr.io/cloud-builders/gcloud"
+    id: Deploy
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        PROJECT=$$(gcloud config get-value core/project)          
+        gke-gcloud-auth-plugin --version
+        export USE_GKE_GCLOUD_AUTH_PLUGIN=True
+        gcloud container clusters get-credentials k8s --zone us-central1-a --project advanced-cloud
+        kubectl apply -f container2deployment.yml
 
 images:
-  - us-east1-docker.pkg.dev/advanced-cloud/container2artifact/container2:latest
+  - "us-east1-docker.pkg.dev/advanced-cloud/container2artifact/container2:latest"

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MyResponse {
     private String file;
-    private int sum;
+    private Integer sum;
     private String error;
 
     public String getFile() {
@@ -16,7 +16,7 @@ public class MyResponse {
         this.file = file;
     }
 
-    public int getSum() {
+    public Integer getSum() {
         return sum;
     }
 
