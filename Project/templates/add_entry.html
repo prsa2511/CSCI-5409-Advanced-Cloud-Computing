@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Journal Entry</title>
+</head>
+<body>
+    <h1>Add a New Journal Entry</h1>
+    <form method="post" enctype="multipart/form-data">
+        <label for="title">Title:</label>
+        <input type="text" id="title" name="title" required><br><br>
+        <label for="content">Content:</label>
+        <textarea id="content" name="content" rows="4" required></textarea><br><br>
+        <label for="date">Date:</label>
+        <input type="text" id="date" name="date" required placeholder="YYYY-MM-DD"><br><br>
+        <input type="submit" value="Add Entry">
+		<label for="image">Image:</label>
+		<input type="file" id="image" name="image" accept="image/*"><br><br>
+    </form>
+    <a href="{{ url_for('index') }}">Back to Journal Entries</a>
+</body>
+</html>
