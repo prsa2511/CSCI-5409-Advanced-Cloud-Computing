@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to My Journal</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image: url('/static/background.webp'); /* Adjusted path */
+            background-size: cover;
+            background-position: center;
+        }
+        .container {
+            display: flex;
+            flex-direction: column; /* Corrected property */
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            margin-bottom: 1rem;
+        }
+        .btn {
+            margin: 0 5px; /* For horizontal spacing, adjust as needed for vertical */
+            display: block; /* Makes each button take up the full width of its container */
+        }
+    </style>
+</head>
+<body>
+
+<div class="container text-center">
+    <h1>Welcome to My Journal</h1>
+    <div class="btn-group-vertical mt-4"> <!-- Use btn-group-vertical for vertical alignment -->
+        <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
+        <a href="{{ url_for('register') }}" class="btn btn-secondary">Sign Up</a>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

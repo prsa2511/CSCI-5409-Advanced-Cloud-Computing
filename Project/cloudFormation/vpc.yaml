@@ -1,0 +1,336 @@
+Parameters:
+  ServiceRoleArn:
+    Type: String
+    Description: ARN of the existing service role for Elastic Beanstalk.
+  EC2KeyName:
+    Type: String
+    Description: Name of an existing EC2 KeyPair to enable SSH access.
+  InstanceProfileName:
+    Type: String
+    Description: Name of an existing EC2 instance profile.
+
+#############################################
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS CloudFormation Template: VPC with Public and Private Subnets, including Route Tables.'
+
+Resources:
+  ############## Security Group ###########
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: SecurityGroup-CloudF
+      GroupDescription: Allows all inbound and outbound traffic.
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+
+############### VPC #####################
+
+  MyVPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: project-vpc
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    DependsOn: MyVPC
+    Properties:
+      Tags:
+        - Key: Name
+          Value: MyInternetGateway
+
+  GatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    DependsOn: MyVPC
+    Properties:
+      VpcId: !Ref MyVPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet:
+    Type: 'AWS::EC2::Subnet'
+    DependsOn: MyVPC
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: MyPublicSubnet
+
+  PrivateSubnet1:
+    Type: 'AWS::EC2::Subnet'
+    DependsOn: MyVPC
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: MyPrivateSubnet1
+
+  PrivateSubnet2:
+    Type: 'AWS::EC2::Subnet'
+    DependsOn: MyVPC
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: 10.0.3.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: MyPrivateSubnet2
+
+  PublicRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    DependsOn: MyVPC
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: MyPublicRouteTable
+
+  PublicRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: GatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+
+########### SNS #############################
+
+  JournalNotificationsTopic:
+    Type: 'AWS::SNS::Topic'
+    Properties:
+      TopicName: 'JournalNotifications'
+      DisplayName: ''
+      Subscription:
+        - Endpoint: 'pr711119@dal.ca'
+          Protocol: 'email'
+
+  JournalNotificationsTopicPolicy:
+    Type: 'AWS::SNS::TopicPolicy'
+    Properties:
+      Topics:
+        - !Ref JournalNotificationsTopic
+      PolicyDocument:
+        Version: '2008-10-17'
+        Id: '__default_policy_ID'
+        Statement:
+          - Sid: '__default_statement_ID'
+            Effect: 'Allow'
+            Principal:
+              AWS: '*'
+            Action:
+              - 'SNS:GetTopicAttributes'
+              - 'SNS:SetTopicAttributes'
+              - 'SNS:AddPermission'
+              - 'SNS:RemovePermission'
+              - 'SNS:DeleteTopic'
+              - 'SNS:Subscribe'
+              - 'SNS:ListSubscriptionsByTopic'
+              - 'SNS:Publish'
+            Resource: !Ref JournalNotificationsTopic
+            Condition:
+              StringEquals:
+                'AWS:SourceOwner': '590183742473'
+
+########### Lambda Function #################
+  ProcessImageCloudF:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ProcessImage-CloudF
+      Handler: lambda_function.lambda_handler
+      Role: !Ref ServiceRoleArn
+      Code:
+        S3Bucket: "journal-bucket-1"
+        S3Key: "lambda.zip"
+      Runtime: python3.9
+      MemorySize: 128
+      Timeout: 3
+      Architectures:
+        - x86_64
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref MySecurityGroup
+        SubnetIds:
+          - !Ref PrivateSubnet1
+          - !Ref PrivateSubnet2
+      TracingConfig:
+        Mode: PassThrough
+
+# ################## RDS #################################
+
+# RDS Aurora Setup
+  MyDBSubnetGroup:
+    Type: 'AWS::RDS::DBSubnetGroup'
+    Properties:
+      DBSubnetGroupName: rds-ec2-db-subnet-group-1-CloudFormation
+      DBSubnetGroupDescription: 'Subnet Group for RDS Aurora'
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      Tags:
+        - Key: Name
+          Value: MyDBSubnetGroup
+
+  MyDBCluster:
+    Type: 'AWS::RDS::DBCluster'
+    Properties:
+      Engine: aurora-mysql
+      EngineVersion: '8.0.mysql_aurora.3.04.1'
+      DBClusterIdentifier: rds-db-CloudFormation
+      MasterUsername: root
+      MasterUserPassword: root1234  # Consider using AWS Secrets Manager for storing the password securely.
+      DBSubnetGroupName: !Ref MyDBSubnetGroup
+      VpcSecurityGroupIds:
+        - !Ref MySecurityGroup
+      BackupRetentionPeriod: 1
+      PreferredBackupWindow: '07:46-08:16'
+      PreferredMaintenanceWindow: 'thu:04:51-thu:05:21'
+      StorageEncrypted: true
+      DatabaseName: journal
+      Tags:
+        - Key: Name
+          Value: MyRDSCluster
+
+  MyDBInstance:
+    Type: 'AWS::RDS::DBInstance'
+    Properties:
+      DBInstanceIdentifier: rds-db-instance-1-CloudFormation
+      DBClusterIdentifier: !Ref MyDBCluster
+      Engine: aurora-mysql
+      DBInstanceClass: 'db.t3.medium'
+      PubliclyAccessible: false
+
+############# SECRET MANAGER ################
+
+  MyDBSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: db_secret-CloudFormation1
+      Description: "Database credentials for RDS Aurora"
+      SecretString: !Sub |
+        {
+          "username": "root",
+          "password": "root1234",
+          "engine": "mysql",
+          "host": "${MyDBInstance.Endpoint.Address}",
+          "port": 3306,
+          "dbClusterIdentifier": "journal"
+        }
+      Tags:
+        - Key: Name
+          Value: MyDBSecret
+
+############## EBS #####################
+  MyEBApplication:
+    Type: AWS::ElasticBeanstalk::Application
+    Properties:
+      ApplicationName: journal
+
+  MyEBAppVersion:
+    Type: AWS::ElasticBeanstalk::ApplicationVersion
+    Properties:
+      ApplicationName: !Ref MyEBApplication
+      SourceBundle:
+        S3Bucket: "journal-bucket-1"
+        S3Key: "Dockerrun.aws.zip"
+
+  MyEBEnvironment:
+    Type: AWS::ElasticBeanstalk::Environment
+    DependsOn: MyDBSecret
+    Properties:
+      EnvironmentName: Journal-env
+      ApplicationName: !Ref MyEBApplication
+      SolutionStackName: "64bit Amazon Linux 2023 v4.3.0 running Docker"
+      OptionSettings:
+        - Namespace: aws:autoscaling:launchconfiguration
+          OptionName: IamInstanceProfile
+          Value: !Ref InstanceProfileName
+        - Namespace: aws:autoscaling:launchconfiguration
+          OptionName: EC2KeyName
+          Value: !Ref EC2KeyName
+        - Namespace: 'aws:autoscaling:launchconfiguration'
+          OptionName: 'InstanceType'
+          Value: 't3.micro'
+        - Namespace: 'aws:autoscaling:launchconfiguration'
+          OptionName: 'SecurityGroups'
+          Value: !GetAtt MySecurityGroup.GroupId
+        - Namespace: aws:elasticbeanstalk:environment
+          OptionName: ServiceRole
+          Value: !Ref ServiceRoleArn
+        - Namespace: aws:ec2:vpc
+          OptionName: VPCId
+          Value: !Ref MyVPC # Assuming MyVPC is defined in this template or passed as a parameter
+        - Namespace: aws:ec2:vpc
+          OptionName: Subnets
+          Value: !Ref PublicSubnet
+        - Namespace: aws:ec2:vpc
+          OptionName: 'AssociatePublicIpAddress'
+          Value: 'true'
+        # Include other necessary configurations as per your requirements
+      VersionLabel: !Ref MyEBAppVersion
+#########################################
+
+
+Outputs:
+  VPCId:
+    Description: VPC ID
+    Value: !Ref MyVPC
+
+  PublicSubnetId:
+    Description: Public Subnet ID
+    Value: !Ref PublicSubnet
+
+  PrivateSubnet1Id:
+    Description: Private Subnet 1 ID
+    Value: !Ref PrivateSubnet1
+
+  PrivateSubnet2Id:
+    Description: Private Subnet 2 ID
+    Value: !Ref PrivateSubnet2
+
+  RDSClusterEndpoint:
+    Description: 'RDS Cluster Endpoint'
+    Value: !GetAtt MyDBCluster.Endpoint.Address
+
+  RDSInstanceEndpoint:
+    Description: 'RDS Instance Endpoint'
+    Value: !GetAtt MyDBInstance.Endpoint.Address
+
+  SecretARN:
+    Description: ARN of the database secret
+    Value: !Ref MyDBSecret
+
+  ElasticBeanstalkEnvironmentURL:
+    Description: 'URL of the Elastic Beanstalk Environment'
+    Value: !GetAtt 'MyEBEnvironment.EndpointURL'
+
+  SecurityGroupId:
+    Description: The ID of the security group.
+    Value: !Ref MySecurityGroup
+
+  JournalNotificationsTopicARN:
+    Description: 'ARN of the SNS Topic'
+    Value: !Ref JournalNotificationsTopic
